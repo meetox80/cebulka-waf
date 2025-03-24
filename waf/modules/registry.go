@@ -3,13 +3,18 @@ package modules
 
 import (
 	logging "cebulka-waf/core"
+	"net/http"
+	"sort"
 )
+
+type ModifierFunc func([]byte, http.Header) []byte
 
 type Module struct {
 	Name        string
 	Description string
 	Version     string
-	Modifier    func([]byte) []byte
+	Priority    int
+	Modifier    ModifierFunc
 }
 
 var _ModuleRegistry = make(map[string]Module)
@@ -19,11 +24,21 @@ func RegisterModule(Mod Module) {
 	_ModuleRegistry[Mod.Name] = Mod
 }
 
-func ApplyModules(Content []byte) []byte {
+func ApplyModules(Content []byte, Headers http.Header) []byte {
 	Processed := Content
-	for Key := range _ModuleRegistry {
-		Mod := _ModuleRegistry[Key]
-		Processed = Mod.Modifier(Processed)
+	var ModList []Module
+
+	for _, V := range _ModuleRegistry {
+		ModList = append(ModList, V)
 	}
+
+	sort.Slice(ModList, func(I, J int) bool {
+		return ModList[I].Priority < ModList[J].Priority
+	})
+
+	for _, M := range ModList {
+		Processed = M.Modifier(Processed, Headers)
+	}
+
 	return Processed
 }

@@ -5,7 +5,6 @@ import (
 	"bytes"
 	logging "cebulka-waf/core"
 	"cebulka-waf/modules"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -60,7 +59,7 @@ func ModifyResponse(Res *http.Response) error {
 		return Err
 	}
 
-	ModifiedContent := modules.ApplyModules(BodyContent)
+	ModifiedContent := modules.ApplyModules(BodyContent, http.Header{})
 
 	Res.Body = BufferCloser{bytes.NewBuffer(ModifiedContent)}
 	Res.ContentLength = int64(len(ModifiedContent))
@@ -74,11 +73,4 @@ func ModifyResponse(Res *http.Response) error {
 	Res.Header.Del("Content-Length")
 	Res.Header.Del("Content-Encoding")
 	return nil
-}
-
-func formatSize(Bytes int) string {
-	if Bytes > 1024 {
-		return fmt.Sprintf("%.2fKB", float64(Bytes)/1024)
-	}
-	return fmt.Sprintf("%dB", Bytes)
 }
