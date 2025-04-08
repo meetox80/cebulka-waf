@@ -1,4 +1,4 @@
-// demo/main.js
+//demo/main.js
 import Fastify from 'fastify'
 import Dotenv from 'dotenv'
 
